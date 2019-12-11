@@ -28,14 +28,24 @@
 <body cz-shortcut-listen="true" class="">
   <div class="container">
     <h1>上传图片</h1>
-    {% for img in photos %}
-          <img class="rounded" src='{{ "static/uploads/"+ img }}'  alt="avatar">
-        {% endfor %}
+      {% for img in photos %}
+        <img style="width: 80px;height: 60px;" class="rounded" src='{{ "static/uploads/"+ img }}'  alt="avatar">
+      {% endfor %}
     <label class="label" data-toggle="tooltip" title="" data-original-title="点击上传图片">
         
       <img class="rounded" id="img" src="static/add.png" alt="avatar">
       <input type="file" class="sr-only" id="input" name="image" accept="image/*">
     </label>
+    <div class="select" >
+      <label for="audioSource">Audio source: </label><select id="audioSource"></select>
+    </div>
+  
+    <div class="select">
+      <label for="videoSource">Video source: </label><select id="videoSource"></select>
+    </div>
+    <button id="take">拍照</button>
+    <video id="v" style="width: 1024px;height: 768px;" autoplay muted playsinline></video>
+    <canvas id="canvas" style="display:none;"></canvas>
     <div class="progress" style="display: none;">
       <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">100%</div>
     </div>
@@ -65,7 +75,53 @@
   <script src="static/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
   <script src="static/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
   <script src="static/cropper.js"></script>
+  <script async src="static/camera.js"></script>
+
   <script>
+    function upload(canvas){
+      canvas.toBlob(function (blob) {
+            var formData = new FormData();
+
+            formData.append('img', blob, 'img.jpg');
+            $.ajax('/postimg', {
+              method: 'POST',
+              data: formData,
+              processData: false,
+              contentType: false,
+
+              xhr: function () {
+                var xhr = new XMLHttpRequest();
+
+                xhr.upload.onprogress = function (e) {
+                  var percent = '0';
+                  var percentage = '0%';
+
+                  if (e.lengthComputable) {
+                    percent = Math.round((e.loaded / e.total) * 100);
+                    percentage = percent + '%';
+                    $progressBar.width(percentage).attr('aria-valuenow', percent).text(percentage);
+                  }
+                };
+
+                return xhr;
+              },
+
+              success: function () {
+                window.location.reload()
+                $alert.show().addClass('alert-success').text('Upload success');
+              },
+
+              error: function () {
+                avatar.src = initialAvatarURL;
+                $alert.show().addClass('alert-warning').text('Upload error');
+              },
+
+              complete: function () {
+                $progress.hide();
+              },
+            });
+          });
+    }
     window.addEventListener('DOMContentLoaded', function () {
       var img = document.getElementById('img');
       var image = document.getElementById('image');
@@ -130,51 +186,21 @@
           img.src = canvas.toDataURL();
           $progress.show();
           $alert.removeClass('alert-success alert-warning');
-          canvas.toBlob(function (blob) {
-            var formData = new FormData();
-
-            formData.append('img', blob, 'img.jpg');
-            $.ajax('/postimg', {
-              method: 'POST',
-              data: formData,
-              processData: false,
-              contentType: false,
-
-              xhr: function () {
-                var xhr = new XMLHttpRequest();
-
-                xhr.upload.onprogress = function (e) {
-                  var percent = '0';
-                  var percentage = '0%';
-
-                  if (e.lengthComputable) {
-                    percent = Math.round((e.loaded / e.total) * 100);
-                    percentage = percent + '%';
-                    $progressBar.width(percentage).attr('aria-valuenow', percent).text(percentage);
-                  }
-                };
-
-                return xhr;
-              },
-
-              success: function () {
-                window.location.reload()
-                $alert.show().addClass('alert-success').text('Upload success');
-              },
-
-              error: function () {
-                avatar.src = initialAvatarURL;
-                $alert.show().addClass('alert-warning').text('Upload error');
-              },
-
-              complete: function () {
-                $progress.hide();
-              },
-            });
-          });
+          upload(canvas);
         }
       });
+      document.getElementById('take').addEventListener('click', function () {
+        let canvas = document.getElementById('canvas');
+        let v = document.getElementById('v');
+        canvas.width = v.videoWidth;
+        canvas.height = v.videoHeight;
+        canvas.getContext('2d').drawImage(v, 0, 0);
+        upload(canvas);
+        // let data = canvas.toDataURL('image/webp');
+        // document.getElementById('photo').setAttribute('src', data);
+      }, false);
     });
+
   </script>
 
 
