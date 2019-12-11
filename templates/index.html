@@ -29,14 +29,14 @@
   <div class="container">
     <h1>上传图片</h1>
       {% for img in photos %}
-        <img style="width: 80px;height: 60px;" class="rounded" src='{{ "static/uploads/"+ img }}'  alt="avatar">
+        <a href='{{ "static/uploads/"+ img }}'><img style="width: 80px;height: 60px;" class="rounded" src='{{ "static/uploads/"+ img }}'  alt="avatar"></a>
       {% endfor %}
     <label class="label" data-toggle="tooltip" title="" data-original-title="点击上传图片">
         
       <img class="rounded" id="img" src="static/add.png" alt="avatar">
       <input type="file" class="sr-only" id="input" name="image" accept="image/*">
     </label>
-    <div class="select" >
+    <div class="select" style="visibility:hidden;" >
       <label for="audioSource">Audio source: </label><select id="audioSource"></select>
     </div>
   
